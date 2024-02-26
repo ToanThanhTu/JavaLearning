@@ -6,131 +6,36 @@ public class Exercise {
 
 }
 
-class Lamp {
-    private String style;
-    private boolean battery;
-    private int globRating;
+class Printer {
+    private int tonerLevel;
+    private int pagesPrinted;
+    private boolean duplex;
 
-    public Lamp(String style, boolean battery, int globRating) {
-        this.style = style;
-        this.battery = battery;
-        this.globRating = globRating;
+    public Printer(int tonerLevel, boolean duplex) {
+        this.tonerLevel = (tonerLevel >= 0 && tonerLevel <= 100) ? tonerLevel : 1;
+        this.duplex = duplex;
+        this.pagesPrinted = 0;
     }
 
-    public void turnOn() {
-        System.out.println("Lamp -> Turning on");
+    public int addToner(int tonerAmount) {
+        if (tonerAmount > 0 && tonerAmount <= 100) {
+            int tempAmount = tonerLevel + tonerAmount;
+            if (tempAmount > 100) {
+                return -1;
+            }
+            tonerLevel += tonerAmount;
+            return tonerLevel;
+        }
+        return -1;
     }
 
-    public String getStyle() {
-        return style;
+    public int printPages(int pages) {
+        int pagesToPrint= (duplex) ? (pages / 2) + (pages % 2) : pages;
+        pagesPrinted += pagesToPrint;
+        return pagesToPrint;
     }
 
-    public boolean isBattery() {
-        return battery;
-    }
-
-    public int getGlobRating() {
-        return globRating;
-    }
-}
-
-class Bed {
-    private String style;
-    private int pillows;
-    private int height;
-    private int sheets;
-    private int quilt;
-
-    public Bed(String style, int pillows, int height, int sheets, int quilt) {
-        this.style = style;
-        this.pillows = pillows;
-        this.height = height;
-        this.sheets = sheets;
-        this.quilt = quilt;
-    }
-
-    public void make() {
-        System.out.println("Bed -> Making | ");
-    }
-
-    public String getStyle() {
-        return style;
-    }
-
-    public int getPillows() {
-        return pillows;
-    }
-
-    public int getHeight() {
-        return height;
-    }
-
-    public int getSheets() {
-        return sheets;
-    }
-
-    public int getQuilt() {
-        return quilt;
+    public int getPagesPrinted() {
+        return pagesPrinted;
     }
 }
-
-class Ceiling {
-    private int height;
-    private int paintedColor;
-
-    public Ceiling(int height, int paintedColor) {
-        this.height = height;
-        this.paintedColor = paintedColor;
-    }
-
-    public int getHeight() {
-        return height;
-    }
-
-    public int getPaintedColor() {
-        return paintedColor;
-    }
-}
-
-class Wall {
-    private String direction;
-
-    public Wall(String direction) {
-        this.direction = direction;
-    }
-
-    public String getDirection() {
-        return direction;
-    }
-}
-
-class Bedroom {
-    private String name;
-    private Wall wall1, wall2, wall3, wall4;
-    private Ceiling ceiling;
-    private Bed bed;
-    private Lamp lamp;
-
-    public Bedroom(String name, Wall wall1, Wall wall2, Wall wall3, Wall wall4,
-                   Ceiling ceiling, Bed bed, Lamp lamp) {
-        this.name = name;
-        this.wall1 = wall1;
-        this.wall2 = wall2;
-        this.wall3 = wall3;
-        this.wall4 = wall4;
-        this.ceiling = ceiling;
-        this.bed = bed;
-        this.lamp = lamp;
-    }
-
-    public Lamp getLamp() {
-        return lamp;
-    }
-
-    public void makeBed() {
-        System.out.println("Bedroom -> Making bed | ");
-        bed.make();
-    }
-}
-
-
