@@ -1,131 +1,164 @@
 import java.util.ArrayList;
-import java.util.LinkedList;
 
 public class Exercise {
 
     public static void main(String[] args) {
-        ArrayList<Album> albums = new ArrayList<>();
+        Bank bank = new Bank("National Australia Bank");
 
-        Album album = new Album("Stormbringer", "Deep Purple");
-        album.addSong("Stormbringer", 4.6);
-        album.addSong("Love don't mean a thing", 4.22);
-        album.addSong("Holy man", 4.3);
-        album.addSong("Hold on", 5.6);
-        album.addSong("Lady double dealer", 3.21);
-        album.addSong("You can't do it right", 6.23);
-        album.addSong("High ball shooter", 4.27);
-        album.addSong("The gypsy", 4.2);
-        album.addSong("Soldier of fortune", 3.13);
-        albums.add(album);
-        System.out.println("Album 1");
-        album.printAlbum();
-        System.out.println("-".repeat(30));
+        bank.addBranch("Adelaide");
 
-        album = new Album("For those about to rock", "AC/DC");
-        album.addSong("For those about to rock", 5.44);
-        album.addSong("I put the finger on you", 3.25);
-        album.addSong("Lets go", 3.45);
-        album.addSong("Inject the venom", 3.33);
-        album.addSong("Snowballed", 4.51);
-        album.addSong("Evil walks", 3.45);
-        album.addSong("C.O.D.", 5.25);
-        album.addSong("Breaking the rules", 5.32);
-        album.addSong("Night of the long knives", 5.12);
-        albums.add(album);
-        System.out.println("Album 2");
-        album.printAlbum();
-        System.out.println("-".repeat(30));
+        bank.addCustomer("Adelaide", "Tim", 50.05);
+        bank.addCustomer("Adelaide", "Mike", 175.34);
+        bank.addCustomer("Adelaide", "Percy", 220.12);
 
-        LinkedList<Song> playList = new LinkedList<Song>();
-        albums.get(0).addToPlayList("You can't do it right", playList);
-        albums.get(0).addToPlayList("Holy man", playList);
-        albums.get(0).addToPlayList("Speed king", playList);  // Does not exist
-        albums.get(0).addToPlayList(9, playList);
-        albums.get(1).addToPlayList(3, playList);
-        albums.get(1).addToPlayList(2, playList);
-        albums.get(1).addToPlayList(24, playList);  // There is no track 24
+        bank.addCustomerTransaction("Adelaide", "Tim", 44.22);
+        bank.addCustomerTransaction("Adelaide", "Tim", 12.44);
+        bank.addCustomerTransaction("Adelaide", "Mike", 1.65);
+
+        bank.listCustomers("Adelaide", true);
+        bank.listCustomers("Adelaide", false);
     }
 
 }
 
-class Album {
-    private String name;
-    private String artist;
-    private ArrayList<Song> songs;
+class Bank {
+    String name;
+    ArrayList<Branch> branches = new ArrayList<>();
 
-    public Album(String name, String artist) {
+    public Bank(String name) {
         this.name = name;
-        this.artist = artist;
-        songs = new ArrayList<>();
     }
 
-    public boolean addSong(String title, double duration) {
-        if (findSong(title) == null) {
-            songs.add(new Song(title, duration));
-            return true;
-        }
-        return false;
-    }
-
-    private Song findSong(String title) {
-        for (Song s : songs) {
-            if (s.getTitle().equalsIgnoreCase(title)) {
-                return s;
+    private Branch findBranch(String name) {
+        for (Branch branch : branches) {
+            if (branch.getName().equalsIgnoreCase(name)) {
+                return branch;
             }
         }
         return null;
     }
 
-    public boolean addToPlayList(int number, LinkedList<Song> playList) {
-        int index = number-1;
-        System.out.println("Album size: " + songs.size());
-        if (index >= songs.size() || index < 0) {
-            System.out.println("Not good");
-            return false;
-        }
-        Song song = songs.get(index);
-        if (song != null) {
-            playList.add(song);
+    public boolean addBranch(String name) {
+        Branch branch = findBranch(name);
+        if (branch == null) {
+            branches.add(new Branch(name));
             return true;
         }
         return false;
     }
 
-    public boolean addToPlayList(String title, LinkedList<Song> playList) {
-        Song song = findSong(title);
-        if (song != null) {
-            playList.add(song);
-            return true;
+    public boolean addCustomer(String branchName,
+                               String customerName,
+                               double initialTransaction) {
+        Branch branch = findBranch(branchName);
+        if (branch != null) {
+            return branch.newCustomer(customerName,
+                    initialTransaction);
         }
         return false;
     }
 
-    public void printAlbum() {
-        for (Song s : songs) {
-            System.out.println(s.getTitle() + ": " + s.getDuration());
+    public boolean addCustomerTransaction(String branchName,
+                                          String customerName,
+                                          double transaction) {
+        Branch branch = findBranch(branchName);
+        if (branch != null) {
+            return branch.addCustomerTransaction(customerName,
+                    transaction);
         }
+        return false;
+    }
+
+    public boolean listCustomers(String branchName,
+                                 boolean printTransactions) {
+        Branch branch = findBranch(branchName);
+        if (branch != null) {
+            System.out.println("Customer details for " +
+                    "branch " + branchName);
+            for (BranchCustomer c : branch.getCustomers()) {
+                System.out.printf("Customer: %s[%d]%n",
+                        c.getName(),
+                        branch.getCustomers().indexOf(c)+1);
+                if (printTransactions) {
+                    System.out.println("Transactions");
+                    for (int i = 0; i < c.getTransactions().size(); i++) {
+                        System.out.printf("[%d] Amount %.2f%n",
+                                i+1,
+                                c.getTransactions().get(i));
+                    }
+                }
+            }
+            return true;
+        }
+        return false;
     }
 }
 
-class Song {
-    private String title;
-    private double duration;
+class Branch {
+    private String name;
+    ArrayList<BranchCustomer> customers = new ArrayList<>();
 
-    public Song(String title, double duration) {
-        this.title = title;
-        this.duration = duration;
+    public Branch(String name) {
+        this.name = name;
     }
 
-    public String getTitle() {
-        return title;
+    public boolean newCustomer(String name,
+                               double initialTransaction) {
+        BranchCustomer customer = findCustomer(name);
+        if (customer == null) {
+            customers.add(new BranchCustomer(name,
+                    initialTransaction));
+            return true;
+        }
+        return false;
     }
 
-    public double getDuration() {
-        return duration;
+    public boolean addCustomerTransaction(String name,
+                                          double transaction) {
+        BranchCustomer customer = findCustomer(name);
+        if (customer != null) {
+            customer.getTransactions().add(transaction);
+            return true;
+        }
+        return false;
     }
 
-    @Override
-    public String toString() {
-        return title + ": " + duration;
+    private BranchCustomer findCustomer(String name) {
+        for (BranchCustomer c : customers) {
+            if (c.getName().equalsIgnoreCase(name)) {
+                return c;
+            }
+        }
+        return null;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public ArrayList<BranchCustomer> getCustomers() {
+        return customers;
+    }
+}
+
+class BranchCustomer {
+    String name;
+    ArrayList<Double> transactions = new ArrayList<>();
+
+    public BranchCustomer(String name, double initialTransaction) {
+        this.name = name;
+        transactions.add(initialTransaction);
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public ArrayList<Double> getTransactions() {
+        return transactions;
+    }
+
+    public void addTransaction(double transaction) {
+        transactions.add(transaction);
     }
 }
