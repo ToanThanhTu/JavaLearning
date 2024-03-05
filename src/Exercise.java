@@ -1,164 +1,276 @@
-import java.util.ArrayList;
-
 public class Exercise {
 
     public static void main(String[] args) {
-        Bank bank = new Bank("National Australia Bank");
 
-        bank.addBranch("Adelaide");
-
-        bank.addCustomer("Adelaide", "Tim", 50.05);
-        bank.addCustomer("Adelaide", "Mike", 175.34);
-        bank.addCustomer("Adelaide", "Percy", 220.12);
-
-        bank.addCustomerTransaction("Adelaide", "Tim", 44.22);
-        bank.addCustomerTransaction("Adelaide", "Tim", 12.44);
-        bank.addCustomerTransaction("Adelaide", "Mike", 1.65);
-
-        bank.listCustomers("Adelaide", true);
-        bank.listCustomers("Adelaide", false);
     }
 
 }
 
-class Bank {
-    String name;
-    ArrayList<Branch> branches = new ArrayList<>();
+abstract class ListItem {
+    protected ListItem rightLink = null;
+    protected ListItem leftLink = null;
+    protected Object value;
 
-    public Bank(String name) {
-        this.name = name;
+    public ListItem(Object value) {
+        this.value = value;
     }
 
-    private Branch findBranch(String name) {
-        for (Branch branch : branches) {
-            if (branch.getName().equalsIgnoreCase(name)) {
-                return branch;
-            }
+    abstract ListItem next();
+    abstract ListItem setNext(ListItem item);
+    abstract ListItem previous();
+    abstract ListItem setPrevious(ListItem item);
+    abstract int compareTo(ListItem item);
+
+    public Object getValue() {
+        return value;
+    }
+
+    public void setValue(Object value) {
+        this.value = value;
+    }
+}
+
+class Node extends ListItem {
+
+    public Node(Object value) {
+        super(value);
+    }
+
+    @Override
+    ListItem next() {
+        return rightLink;
+    }
+
+    @Override
+    ListItem setNext(ListItem item) {
+        rightLink = item;
+        return rightLink;
+    }
+
+    @Override
+    ListItem previous() {
+        return leftLink;
+    }
+
+    @Override
+    ListItem setPrevious(ListItem item) {
+        leftLink = item;
+        return leftLink;
+    }
+
+    @Override
+    int compareTo(ListItem item) {
+        if (item != null) {
+            return ((String) super.getValue()).compareTo((String) item.getValue());
+        } else {
+            return -1;
         }
-        return null;
     }
 
-    public boolean addBranch(String name) {
-        Branch branch = findBranch(name);
-        if (branch == null) {
-            branches.add(new Branch(name));
+}
+
+class MyLinkedList implements NodeList {
+    private ListItem root;
+
+    public MyLinkedList(ListItem root) {
+        this.root = root;
+    }
+
+    @Override
+    public ListItem getRoot() {
+        return root;
+    }
+
+    @Override
+    public boolean addItem(ListItem item) {
+        if (root == null) {
+            root = item;
             return true;
         }
-        return false;
-    }
 
-    public boolean addCustomer(String branchName,
-                               String customerName,
-                               double initialTransaction) {
-        Branch branch = findBranch(branchName);
-        if (branch != null) {
-            return branch.newCustomer(customerName,
-                    initialTransaction);
+        ListItem currentItem = root;
+
+        while (currentItem != null) {
+            int index = currentItem.compareTo(item);
+            if (index < 0) {
+                if (currentItem.next() != null) {
+                    currentItem = currentItem.next();
+                } else {
+                    currentItem.setNext(item).setPrevious(currentItem);
+                    return true;
+                }
+            } else if (index > 0) {
+                if (currentItem.previous() != null) {
+                    currentItem.previous().setNext(item).setPrevious(currentItem.previous());
+                    item.setNext(currentItem).setPrevious(item);
+                } else {
+                    item.setNext(this.root).setPrevious(item);
+                    this.root = item;
+                }
+                return true;
+            } else {
+                return false;
+            }
         }
         return false;
     }
 
-    public boolean addCustomerTransaction(String branchName,
-                                          String customerName,
-                                          double transaction) {
-        Branch branch = findBranch(branchName);
-        if (branch != null) {
-            return branch.addCustomerTransaction(customerName,
-                    transaction);
+    @Override
+    public boolean removeItem(ListItem item) {
+        if (item != null) {
+            System.out.println("Deleting item " + item.getValue());
         }
-        return false;
-    }
 
-    public boolean listCustomers(String branchName,
-                                 boolean printTransactions) {
-        Branch branch = findBranch(branchName);
-        if (branch != null) {
-            System.out.println("Customer details for " +
-                    "branch " + branchName);
-            for (BranchCustomer c : branch.getCustomers()) {
-                System.out.printf("Customer: %s[%d]%n",
-                        c.getName(),
-                        branch.getCustomers().indexOf(c)+1);
-                if (printTransactions) {
-                    System.out.println("Transactions");
-                    for (int i = 0; i < c.getTransactions().size(); i++) {
-                        System.out.printf("[%d] Amount %.2f%n",
-                                i+1,
-                                c.getTransactions().get(i));
+        ListItem currentItem = this.root;
+        while (currentItem != null) {
+            int index = currentItem.compareTo(item);
+            if (index == 0) {
+                if (currentItem == this.root) {
+                    this.root = currentItem.next();
+                } else {
+                    currentItem.previous().setNext(currentItem.next());
+                    if (currentItem.next() != null) {
+                        currentItem.next().setPrevious(currentItem.previous());
                     }
                 }
+                return true;
+            } else if (index < 0) {
+                currentItem = currentItem.next();
+            } else {
+                return false;
             }
-            return true;
         }
         return false;
+    }
+
+    @Override
+    public void traverse(ListItem root) {
+        if (root == null) {
+            System.out.println("The list is empty");
+            return;
+        }
+        while  (root != null) {
+            System.out.println(root.getValue());
+            root = root.next();
+        }
     }
 }
 
-class Branch {
-    private String name;
-    ArrayList<BranchCustomer> customers = new ArrayList<>();
+class SearchTree implements NodeList {
+    private ListItem root = null;
 
-    public Branch(String name) {
-        this.name = name;
+    public SearchTree(ListItem root) {
+        this.root = root;
     }
 
-    public boolean newCustomer(String name,
-                               double initialTransaction) {
-        BranchCustomer customer = findCustomer(name);
-        if (customer == null) {
-            customers.add(new BranchCustomer(name,
-                    initialTransaction));
+    @Override
+    public ListItem getRoot() {
+        return this.root;
+    }
+
+    @Override
+    public boolean addItem(ListItem item) {
+        if (this.root == null) {
+            this.root = item;
             return true;
         }
-        return false;
-    }
 
-    public boolean addCustomerTransaction(String name,
-                                          double transaction) {
-        BranchCustomer customer = findCustomer(name);
-        if (customer != null) {
-            customer.getTransactions().add(transaction);
-            return true;
-        }
-        return false;
-    }
-
-    private BranchCustomer findCustomer(String name) {
-        for (BranchCustomer c : customers) {
-            if (c.getName().equalsIgnoreCase(name)) {
-                return c;
+        ListItem currentItem = this.root;
+        while (currentItem != null) {
+            int index = currentItem.compareTo(item);
+            if (index < 0) {
+                if (currentItem.next() != null) {
+                    currentItem = currentItem.next();
+                } else {
+                    currentItem.setNext(item);
+                    return true;
+                }
+            } else if (index > 0) {
+                if (currentItem.previous() != null) {
+                    currentItem = currentItem.previous();
+                } else {
+                    currentItem.setPrevious(item);
+                    return true;
+                }
+            } else {
+                System.out.println(item.getValue() + " is already present");
+                return false;
             }
         }
-        return null;
+        return false;
     }
 
-    public String getName() {
-        return name;
+    @Override
+    public boolean removeItem(ListItem item) {
+        if (item != null) {
+            System.out.println("Deleting item " + item.getValue());
+        }
+
+        ListItem currentItem = this.root;
+        ListItem parentItem = currentItem;
+
+        while (currentItem != null) {
+            int index = currentItem.compareTo(item);
+            if (index < 0) {
+                parentItem = currentItem;
+                currentItem = currentItem.next();
+            } else if (index > 0) {
+                parentItem = currentItem;
+                currentItem = currentItem.previous();
+            } else {
+                performRemoval(currentItem, parentItem);
+                return true;
+            }
+        }
+        return false;
     }
 
-    public ArrayList<BranchCustomer> getCustomers() {
-        return customers;
+    private void performRemoval(ListItem item, ListItem parent) {
+        if (item.next() == null) {
+            if (parent.next() == item) {
+                parent.setNext(item.previous());
+            } else if (parent.previous() == item) {
+                parent.setPrevious(item.previous());
+            } else {
+                this.root = item.previous();
+            }
+        } else if (item.previous() == null) {
+            if (parent.next() == item) {
+                parent.setNext(item.next());
+            } else if (parent.previous() == item) {
+                parent.setPrevious(item.next());
+            } else {
+                this.root = item.next();
+            }
+        } else {
+            ListItem current = item.next();
+            ListItem leftmostParent = item;
+            while (current.previous() != null) {
+                leftmostParent = current;
+                current = current.previous();
+            }
+            item.setValue(current.getValue());
+            if (leftmostParent == item) {
+                item.setNext(current.next());
+            } else {
+                leftmostParent.setPrevious(current.next());
+            }
+        }
+    }
+
+    @Override
+    public void traverse(ListItem root) {
+        if (root != null) {
+            traverse(root.previous());
+            System.out.println(root.getValue());
+            traverse(root.next());
+        }
     }
 }
 
-class BranchCustomer {
-    String name;
-    ArrayList<Double> transactions = new ArrayList<>();
-
-    public BranchCustomer(String name, double initialTransaction) {
-        this.name = name;
-        transactions.add(initialTransaction);
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public ArrayList<Double> getTransactions() {
-        return transactions;
-    }
-
-    public void addTransaction(double transaction) {
-        transactions.add(transaction);
-    }
+interface NodeList {
+    ListItem getRoot();
+    boolean addItem(ListItem item);
+    boolean removeItem(ListItem item);
+    void traverse(ListItem root);
 }
